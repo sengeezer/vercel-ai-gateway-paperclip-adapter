@@ -3,7 +3,17 @@ import { createGateway } from "ai";
 
 export const defaultModels: AdapterModel[] = [
   { id: "openai/gpt-5.4", label: "OpenAI GPT-5.4" },
+  { id: "amazon/nova-micro", label: "Amazon Nova Micro" },
   { id: "anthropic/claude-sonnet-4.6", label: "Anthropic Claude Sonnet 4.6" }
+];
+
+const CHEAP_MODEL_CANDIDATES = [
+  "amazon/nova-micro",
+  "openai/gpt-5.1-mini",
+  "openai/gpt-5.4-mini",
+  "google/gemini-2.5-flash-lite",
+  "google/gemini-2.5-flash",
+  "anthropic/claude-haiku-4.5"
 ];
 
 type GatewayModelMetadata = {
@@ -89,6 +99,21 @@ export async function listAvailableModels(options?: { forceRefresh?: boolean }):
     cachedAt = now;
     return defaultModels;
   }
+}
+
+export function selectCheapModel(models: AdapterModel[]): string {
+  for (const candidate of CHEAP_MODEL_CANDIDATES) {
+    if (models.some((model) => model.id === candidate)) {
+      return candidate;
+    }
+  }
+
+  const heuristicMatch = models.find((model) => /\b(micro|mini|nano|flash|haiku|lite)\b/i.test(model.id));
+  if (heuristicMatch) {
+    return heuristicMatch.id;
+  }
+
+  return models[0]?.id ?? defaultModels[0].id;
 }
 
 export function resetModelCache(): void {

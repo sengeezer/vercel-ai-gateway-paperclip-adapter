@@ -8,7 +8,7 @@ vi.mock("ai", () => ({
   createGateway: createGatewayMock
 }));
 
-import { defaultModels, listAvailableModels, normalizeGatewayModels, resetModelCache } from "../src/server/models.js";
+import { defaultModels, listAvailableModels, normalizeGatewayModels, resetModelCache, selectCheapModel } from "../src/server/models.js";
 
 describe("model discovery", () => {
   const originalApiKey = process.env.AI_GATEWAY_API_KEY;
@@ -76,5 +76,10 @@ describe("model discovery", () => {
       { id: "openai/gpt-5.4", label: "GPT-5.4" }
     ]);
     expect(createGatewayMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("prefers a cheap-capable model when deriving the cheap profile default", () => {
+    expect(selectCheapModel(defaultModels)).toBe("amazon/nova-micro");
+    expect(selectCheapModel([{ id: "openai/gpt-5.4", label: "GPT-5.4" }])).toBe("openai/gpt-5.4");
   });
 });
