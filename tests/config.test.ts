@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseConfig } from "../src/server/config.js";
+import { getConfigSchema, parseConfig } from "../src/server/config.js";
 
 describe("parseConfig", () => {
   it("applies defaults", () => {
@@ -27,5 +27,15 @@ describe("parseConfig", () => {
     expect(() => parseConfig({ providerOptionsJson: "[]" })).toThrow(
       "providerOptionsJson must parse to a JSON object."
     );
+  });
+
+  it("exposes explicit field defaults for create-mode UI", async () => {
+    const schema = await getConfigSchema();
+    const defaults = Object.fromEntries(schema.fields.map((field) => [field.key, field.default]));
+
+    expect(defaults.model).toBe("openai/gpt-5.4");
+    expect(defaults.promptTemplate).toBe("Continue the assigned work.");
+    expect(defaults.resumeMode).toBe("best_effort");
+    expect(defaults.timeoutMs).toBe(120000);
   });
 });

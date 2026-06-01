@@ -7,6 +7,10 @@ type GatewaySort = "cost" | "ttft" | "tps";
 type GatewayCaching = "auto";
 
 const MODEL_PATTERN = /^[^/\s]+\/[^/\s].+$/;
+const DEFAULT_MODEL = "openai/gpt-5.4";
+const DEFAULT_PROMPT_TEMPLATE = "Continue the assigned work.";
+const DEFAULT_TIMEOUT_MS = 120000;
+const DEFAULT_RESUME_MODE = "best_effort" as const;
 
 const rawConfigSchema = z.object({
   model: z
@@ -14,14 +18,14 @@ const rawConfigSchema = z.object({
     .trim()
     .min(1)
     .refine((value) => MODEL_PATTERN.test(value), "Model must use provider/model format.")
-    .default("openai/gpt-5.4"),
-  promptTemplate: z.string().trim().min(1).default("Continue the assigned work."),
+    .default(DEFAULT_MODEL),
+  promptTemplate: z.string().trim().min(1).default(DEFAULT_PROMPT_TEMPLATE),
   systemPrompt: z.string().trim().optional(),
   temperature: z.coerce.number().min(0).max(2).optional(),
   maxOutputTokens: z.coerce.number().int().positive().optional(),
   reasoningEffort: z.enum(["none", "minimal", "low", "medium", "high", "xhigh"]).optional(),
-  timeoutMs: z.coerce.number().int().positive().default(120000),
-  resumeMode: z.enum(["off", "best_effort"]).default("best_effort"),
+  timeoutMs: z.coerce.number().int().positive().default(DEFAULT_TIMEOUT_MS),
+  resumeMode: z.enum(["off", "best_effort"]).default(DEFAULT_RESUME_MODE),
   gatewayOrder: z.union([z.string(), z.array(z.string())]).optional(),
   gatewayOnly: z.union([z.string(), z.array(z.string())]).optional(),
   gatewaySort: z.enum(["cost", "ttft", "tps"]).optional(),
@@ -144,6 +148,7 @@ export async function getConfigSchema(): Promise<AdapterConfigSchema> {
         key: "model",
         label: "Model",
         type: "combobox",
+        default: DEFAULT_MODEL,
         required: true,
         group: "Model",
         hint: "Provider/model id routed through Vercel AI Gateway.",
@@ -157,6 +162,7 @@ export async function getConfigSchema(): Promise<AdapterConfigSchema> {
         key: "promptTemplate",
         label: "Prompt Template",
         type: "textarea",
+        default: DEFAULT_PROMPT_TEMPLATE,
         required: true,
         group: "Model"
       },
@@ -211,12 +217,13 @@ export async function getConfigSchema(): Promise<AdapterConfigSchema> {
         label: "Resume Mode",
         type: "select",
         group: "Resume",
-        default: "best_effort",
+        default: DEFAULT_RESUME_MODE,
         options: [
           { label: "off", value: "off" },
           { label: "best_effort", value: "best_effort" }
         ]
       },
+      { key: "timeoutMs", label: "Timeout (ms)", type: "number", group: "Generation", default: DEFAULT_TIMEOUT_MS },
       { key: "providerOptionsJson", label: "Provider Options JSON", type: "textarea", group: "Advanced JSON" },
       { key: "byokJson", label: "BYOK JSON", type: "textarea", group: "Advanced JSON" },
       { key: "metadataJson", label: "Metadata JSON", type: "textarea", group: "Advanced JSON" }
